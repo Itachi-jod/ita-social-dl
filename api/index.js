@@ -1,18 +1,24 @@
 const axios = require("axios");
 const FormData = require("form-data");
 
+// Helper to send pretty JSON
+function sendPretty(res, data, status = 200) {
+  res.setHeader("Content-Type", "application/json");
+  res.statusCode = status;
+  res.end(JSON.stringify(data, null, 2)); // 2-space indentation
+}
+
 module.exports = async (req, res) => {
-  // Only allow GET requests
   if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return sendPretty(res, { error: "Method not allowed" }, 405);
   }
 
-  const path = req.url.split("?")[0]; // Get the path
+  const path = req.url.split("?")[0];
   const query = req.query;
 
   // Root endpoint
   if (path === "/api/" || path === "/api") {
-    return res.status(200).json({
+    return sendPretty(res, {
       success: true,
       endpoint: "/",
       author: "ItachiXD",
@@ -26,7 +32,7 @@ module.exports = async (req, res) => {
     const videoUrl = query.url;
 
     if (!videoUrl) {
-      return res.status(400).json({ error: "Missing ?url=" });
+      return sendPretty(res, { error: "Missing ?url=" }, 400);
     }
 
     try {
@@ -52,21 +58,21 @@ module.exports = async (req, res) => {
         }
       );
 
-      return res.status(200).json({
+      return sendPretty(res, {
         success: true,
         endpoint: "/download",
         author: "ItachiXD",
         data: response.data,
       });
     } catch (error) {
-      return res.status(500).json({
+      return sendPretty(res, {
         success: false,
         message: "Upstream API failed",
         error: error.message,
-      });
+      }, 500);
     }
   }
 
-  // If path doesn't match
-  return res.status(404).json({ error: "Endpoint not found" });
+  // Not found
+  return sendPretty(res, { error: "Endpoint not found" }, 404);
 };
